@@ -48,12 +48,12 @@ def serial_connect(baudrate):
     try:
         device = serial.Serial(args["port"], baudrate, timeout=1)
         serial_ok = True
+        client.publish(args["topic-status"], "online", retain=True)
         print("Open " + str(args["port"]) + " baudrate:" + str(baudrate) + " lineending:" + args["lineending"])
     except Exception as e:
         print("!! Serial failure !! : " + str(e))
-        time.sleep(5)
         serial_ok = False
-        sys.exit(1)
+        client.publish(args["topic-status"], "serialerror", retain=True)
 
 """ When a serial message is received
 """
@@ -72,7 +72,7 @@ def on_serial_message():
                     print("[" + args["topic"] + "] --> " + " ERROR " + str(e))
                     serial_ok = False
                     device.close()
-                    sys.exit(1)
+                    client.publish(args["topic-status"], "serialerror", retain=True)
 
 """ When the serial object is connected to a mqtt server
 """
@@ -90,7 +90,6 @@ def on_mqtt_connect(client, userdata, flags, rc):
         client.publish(args["topic-lineending"], args["lineending"], retain=True)
         client.publish(args["topic-baudrate"], args["baudrate"], retain=True)
 
-        client.publish(args["topic-status"], "online", retain=True)
 
         client.subscribe(args["topic-in"])
         client.subscribe(args["topic-out"])
@@ -120,6 +119,7 @@ def on_mqtt_message(client, userdata, message):
         except Exception as e:
             print("[" + args["topic"] + "] --> " + " SERIAL WRITE ERROR " + str(e))
             device.close()
+            client.publish(args["topic-baudrate"], args["baudrate"], retain=True)
             serial_ok = False
 
     # If lineending is changed
@@ -139,7 +139,7 @@ def on_mqtt_disconnect(client, userdata, rc):
     reconnection_need = True
 
 
-print("usini-usbmqtt ----(Beta v0.1)---------")
+print("usini-usbmqtt ----(Beta v0.2)---------")
 print("https://github.com/usini/usini-usbmqtt")
 print("--------------------------------------")
 args = Settings.get() #Get settings from command line or settings file (default usini-usbmqtt.ini)
@@ -151,6 +151,9 @@ if(args["port"] == ""):
     for serial_device in list_ports.comports():
         if(serial_device.pid != None):
             args["port"] = serial_device.device
+if(args["port"] == ""):
+    print("No serial port founded")
+    sys.exit(1)
 
 #args["lineending_encode"] = convert_lineending(args["lineending"]);
 
