@@ -27,7 +27,7 @@ Download: https://github.com/usini/usini-usbmqtt/releases
 When connected to a serial device, usini-usbmqtt generate these topics (with retain)
 
 * /serial/PORT/in : Send a message to serial device
-* /serial/PORT/out : Receive a messae from serial device
+* /serial/PORT/out : Receive a message from serial device
 * /serial/PORT/baudrate : Change baudrate and reconnect
 * /serial/PORT/lineending : Change lineending
 * /serial/PORT/status : Display current status (offline / online / serialerror)
